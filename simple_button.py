@@ -1,9 +1,7 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QPushButton
-from PyQt6.QtCore import Slot 
 
 #Greetings
-@Slot()
 def say_hello():
     print("Button clicked. Hello!")
 
@@ -20,4 +18,4 @@ button.clicked.connect(say_hello)
 button.show()
 
 #Run the main Qt loop
-app.exec()
+sys.exit(app.exec())
