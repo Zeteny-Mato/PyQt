@@ -1,6 +1,5 @@
 import sys
 import os
-import tempfile
 from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QWidget, QVBoxLayout, QToolBar, QColorDialog, QMenu, QToolButton
 from PyQt6.QtGui import QPainter, QPen, QColor, QAction
 from PyQt6.QtCore import Qt, QPoint
@@ -45,18 +44,23 @@ class DrawingProgram(QMainWindow):
         ## Window actions menu
         window_actions_menu = QMenu("Window Actions", self)
         new_action = QAction("New", self)
+        new_action.setShortcut("Ctrl+N")
         new_action.triggered.connect(self.new_drawing)
         window_actions_menu.addAction(new_action)
         open_action = QAction("Open", self)
+        open_action.setShortcut("Ctrl+O")
         open_action.triggered.connect(self.open_drawing)
         window_actions_menu.addAction(open_action)
         save_action = QAction("Save", self)
+        save_action.setShortcut("Ctrl+S")
         save_action.triggered.connect(self.save_drawing)
         window_actions_menu.addAction(save_action)
         save_as_action = QAction("Save As", self)
+        save_as_action.setShortcut("Ctrl+Shift+S")
         save_as_action.triggered.connect(self.save_drawing_as)
         window_actions_menu.addAction(save_as_action)
         close_action = QAction("Close", self)
+        close_action.setShortcut("Ctrl+W")
         close_action.triggered.connect(self.close)
         window_actions_menu.addAction(close_action)
 
@@ -70,20 +74,25 @@ class DrawingProgram(QMainWindow):
         ## Color menu
         color_menu = QMenu("Color", self)
         black_action = QAction("Black", self)
+        black_action.setShortcut("1")
         black_action.triggered.connect(lambda: self.set_color(Qt.GlobalColor.black))
         color_menu.addAction(black_action)
         red_action = QAction("Red", self)
+        red_action.setShortcut("2")
         red_action.triggered.connect(lambda: self.set_color(Qt.GlobalColor.red))
         color_menu.addAction(red_action)
         green_action = QAction("Green", self)
+        green_action.setShortcut("3")
         green_action.triggered.connect(lambda: self.set_color(Qt.GlobalColor.green))
         color_menu.addAction(green_action)
         blue_action = QAction("Blue", self)
+        blue_action.setShortcut("4")
         blue_action.triggered.connect(lambda: self.set_color(Qt.GlobalColor.blue))
         color_menu.addAction(blue_action)
-        white_action = QAction("Eraser", self)
-        white_action.triggered.connect(lambda: self.set_color(Qt.GlobalColor.white))
-        color_menu.addAction(white_action)
+        eraser_action = QAction("Eraser", self)
+        eraser_action.setShortcut("5")
+        eraser_action.triggered.connect(lambda: self.set_color(Qt.GlobalColor.white))
+        color_menu.addAction(eraser_action)
 
         ## Color button
         color_button = QToolButton(self)
@@ -95,17 +104,21 @@ class DrawingProgram(QMainWindow):
         ## Brush size menu
         brush_size_menu = QMenu("Brush Size", self)
         width_1_action = QAction("Width 1 pixel", self)
+        width_1_action.setShortcut("6")
         width_1_action.triggered.connect(lambda: self.set_width(1))
         brush_size_menu.addAction(width_1_action)
         width_3_action = QAction("Width: 3 pixels", self)
+        width_3_action.setShortcut("7")
         width_3_action.triggered.connect(lambda: self.set_width(3))
         brush_size_menu.addAction(width_3_action)
         width_5_action = QAction("Width: 5 pixels", self)
+        width_5_action.setShortcut("8")
         width_5_action.triggered.connect(lambda: self.set_width(5))
         brush_size_menu.addAction(width_5_action)
-        width_7_action = QAction("Width: 10 pixels", self)
-        width_7_action.triggered.connect(lambda: self.set_width(10))
-        brush_size_menu.addAction(width_7_action)
+        width_10_action = QAction("Width: 10 pixels", self)
+        width_10_action.setShortcut("9")
+        width_10_action.triggered.connect(lambda: self.set_width(10))
+        brush_size_menu.addAction(width_10_action)
 
         ## Brush size button
         brush_size_button = QToolButton(self)
