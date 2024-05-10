@@ -1,6 +1,4 @@
 import sys
-import os
-import tempfile
 from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QWidget, QVBoxLayout
 from PyQt6.QtGui import QPainter, QPen, QColor, QAction
 from PyQt6.QtCore import Qt, QPoint
@@ -11,15 +9,9 @@ class DrawingProgram(QMainWindow):
         self.initUI()
         self.lines = []
         self.current_color = Qt.GlobalColor.black
-        self.current_width = 3
         self.dirty = False
-        self.temp_file_path = None
+        self.file_path = None
         self.setStyleSheet("QMainWindow { background-color:white; }")
-        self.load_temp_drawing()
-        self.__leftMouseButtonDown = False
-        self.__startPosition = QPoint()
-        self.__endPosition = QPoint()
-        self.free_draw_mode = False
 
     def initUI(self):
         ## Window setup
@@ -36,7 +28,6 @@ class DrawingProgram(QMainWindow):
         menubar = self.menuBar()
         file_menu = menubar.addMenu('File')
         color_menu = menubar.addMenu('Color')
-        width_menu = menubar.addMenu('Width')
 
         ## File menu actions
         new_action = QAction('New', self)
@@ -90,74 +81,29 @@ class DrawingProgram(QMainWindow):
         white_action.triggered.connect(lambda: self.set_color(Qt.GlobalColor.white))
         color_menu.addAction(white_action)
 
-        ## Width menu actions
-        width_1_action = QAction('Width 1 pixel', self)
-        width_1_action.setShortcut("6")
-        width_1_action.triggered.connect(lambda: self.set_width(1))
-        width_menu.addAction(width_1_action)
-
-        width_3_action = QAction('Width: 3 pixels', self)
-        width_3_action.setShortcut("7")
-        width_3_action.triggered.connect(lambda: self.set_width(3))
-        width_menu.addAction(width_3_action)
-
-        width_5_action = QAction('Width: 5 pixels', self)
-        width_5_action.setShortcut("8")
-        width_5_action.triggered.connect(lambda: self.set_width(5))
-        width_menu.addAction(width_5_action)
-
-        width_7_action = QAction('Width: 10 pixels', self)
-        width_7_action.setShortcut("9")
-        width_7_action.triggered.connect(lambda: self.set_width(10))
-        width_menu.addAction(width_7_action)
-
     def paintEvent(self, event):
         painter = QPainter(self)
         for line in self.lines:
             if line[2] == Qt.GlobalColor.white:
-                painter.setPen(QPen(line[2], 9, Qt.PenStyle.SolidLine))  # Set pen width to 9 for white color
+                painter.setPen(QPen(line[2], 12, Qt.PenStyle.SolidLine))  # Set pen width to 9 for white color
             else:
                 painter.setPen(QPen(line[2], 3, Qt.PenStyle.SolidLine))  # Set pen width to 3 for other colors
-            painter.setPen(QPen(line[2], line[3], Qt.PenStyle.SolidLine))
             painter.drawLine(line[0], line[1])
-
-        if self.__leftMouseButtonDown:
-            if self.current_color == Qt.GlobalColor.white and self.free_draw_mode:
-                painter.setPen(QPen(self.current_color, self.current_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-                painter.drawLine(self.__startPosition, self.__endPosition)
-            else:
-                painter.setPen(QPen(self.current_color, self.current_width, Qt.PenStyle.SolidLine))
-                painter.drawLine(self.__startPosition, self.__endPosition)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            self.__leftMouseButtonDown = True
-            self.__startPosition = event.pos()
-            self.__endPosition = event.pos()
-            if self.current_color == Qt.GlobalColor.white:
-                self.free_draw_mode = True
+            self.last_point = event.pos()
 
     def mouseMoveEvent(self, event):
-        if self.__leftMouseButtonDown:
-            self.__endPosition = event.pos()
-            if self.current_color == Qt.GlobalColor.white and self.free_draw_mode:
-                self.lines.append((self.__startPosition, self.__endPosition, self.current_color, self.current_width))
-                self.__startPosition = self.__endPosition
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            new_point = event.pos()
+            self.lines.append((self.last_point, new_point, self.current_color))
+            self.last_point = new_point
             self.update()
-
-    def mouseReleaseEvent(self, event):
-        if self.__leftMouseButtonDown:
-            self.__leftMouseButtonDown = False
-            if not (self.current_color == Qt.GlobalColor.white and self.free_draw_mode):
-                self.lines.append((self.__startPosition, self.__endPosition, self.current_color, self.current_width))
             self.dirty = True
-            self.free_draw_mode = False
 
     def set_color(self, color):
         self.current_color = color
-
-    def set_width(self, width):
-        self.current_width = width
 
     def new_drawing(self):
         if self.dirty:
@@ -168,7 +114,7 @@ class DrawingProgram(QMainWindow):
                 return
         self.lines = []
         self.dirty = False
-        self.temp_file_path = None
+        self.file_path = None
         self.update()
 
     def open_drawing(self):
@@ -186,72 +132,33 @@ class DrawingProgram(QMainWindow):
             self.update()
 
     def save_drawing(self):
-    # Create a dialog to get the file path from the user
-        def open_drawing(self):
-            if self.dirty:
-                response = QMessageBox.question(self, "Save Changes?", "Do you want to save the current drawing?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
-                if response == QMessageBox.StandardButton.Yes:
-                    self.save_drawing()
-                elif response == QMessageBox.StandardButton.Cancel:
-                    return
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open Drawing", "", "Drawing Files (*.draw)")
-        if file_path:
-            self.load_drawing(file_path)
-            self.temp_file_path = file_path
-            self.dirty = False
-            self.update()
-
-    def save_drawing(self):
-        if not self.temp_file_path:
+        if not self.file_path:
             self.save_drawing_as()
         else:
-            self.save_drawing_to_file(self.temp_file_path)
+            self.save_drawing_to_file(self.file_path)
 
     def save_drawing_as(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Drawing", "", "Drawing Files (*.draw)")
-    
-    # If the user didn't cancel the dialog
         if file_path:
-            with open(file_path, 'w') as f:
-                for line in self.lines:
-                    color = QColor(line[2])  # Convert Qt.GlobalColor to QColor
-                    f.write(f"{line[0].x()},{line[0].y()},{line[1].x()},{line[1].y()},{color.name()}\n")
             self.save_drawing_to_file(file_path)
-            self.temp_file_path = file_path
+            self.file_path = file_path
             self.dirty = False
-            self.temp_file_path = file_path  # Store the file path for future use
 
     def save_drawing_to_file(self, file_path):
         with open(file_path, 'w') as f:
             for line in self.lines:
-                color = QColor(line[2])
-                f.write(f"{line[0].x()},{line[0].y()},{line[1].x()},{line[1].y()},{color.name()},{line[3]}\n")
+                f.write(f"{line[0].x()},{line[0].y()},{line[1].x()},{line[1].y()},{line[2].name()}\n")
+        self.update_title()
 
-    def load_temp_drawing(self):
-        if self.temp_file_path and os.path.exists(self.temp_file_path):
-            with open(self.temp_file_path, 'r') as f:
-                self.lines = []
-                for line in f:
-                    parts = line.strip().split(',')
-                    start = QPoint(int(parts[0]), int(parts[1]))
-                    end = QPoint(int(parts[2]), int(parts[3]))
-                    color = QColor(parts[4])
-                    width = int(parts[5])
-                    self.lines.append((start, end, color, width))
-            self.update()
-
-    def load_temp_drawing(self):
-        if self.temp_file_path and os.path.exists(self.temp_file_path):
-            with open(self.temp_file_path, 'r') as f:
-                self.lines = []
-                for line in f:
-                    parts = line.strip().split(',')
-                    start = QPoint(int(parts[0]), int(parts[1]))
-                    end = QPoint(int(parts[2]), int(parts[3]))
-                    color = QColor(parts[4])
-                    self.lines.append((start, end, color))
-        self.update()
-
+    def load_drawing(self, file_path):
+        self.lines = []
+        with open(file_path, 'r') as f:
+            for line in f:
+                parts = line.strip().split(',')
+                start = QPoint(int(parts[0]), int(parts[1]))
+                end = QPoint(int(parts[2]), int(parts[3]))
+                color = QColor(parts[4])
+                self.lines.append((start, end, color))
 
     def closeEvent(self, event):
         if self.dirty:
@@ -262,6 +169,15 @@ class DrawingProgram(QMainWindow):
                 event.ignore()
                 return
         event.accept()
+
+    def update_title(self):
+        if self.file_path:
+            title = f"Drawing Program - {self.file_path}"
+        else:
+            title = "Drawing Program"
+        if self.dirty:
+            title += " *"
+        self.setWindowTitle(title)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
