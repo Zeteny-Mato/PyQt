@@ -5,6 +5,7 @@ from PyQt6.QtGui import QPainter, QPen, QColor, QAction
 from PyQt6.QtCore import Qt, QPoint
 
 class DrawingProgram(QMainWindow):
+    ## Initialize the drawing application's state, including UI, drawing settings, and temporary file management.
     def __init__(self):
         super().__init__()
         self.initUI()
